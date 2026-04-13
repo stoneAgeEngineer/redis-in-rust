@@ -12,7 +12,7 @@ fn main() {
         match stream {
             Ok(mut stream) => {
                 loop {
-                    let mut buff = [0u8 , 64];
+                    let mut buff = [0u8 ; 64];
                     let bytes_read = stream.read(&mut buff).unwrap();
                     if bytes_read == 0 {
                         break;
