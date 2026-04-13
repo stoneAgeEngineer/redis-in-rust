@@ -11,7 +11,7 @@ fn main() {
      for stream in listener.incoming() {
          match stream {
              Ok(_stream) => {
-                 println!("+PONG");
+                 println!("+PONG\r\n");
              }
              Err(e) => {
                  println!("error: {}", e);
