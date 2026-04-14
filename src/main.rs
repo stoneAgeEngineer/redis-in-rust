@@ -29,10 +29,13 @@ fn main() {
             }
         });
     }
+}
 
-    /*
-       let mut buffer = String::new();
-       io::stdin().read_line(&mut buffer);
-       io::stdout().write_all("PONG");
-       */
+fn _redis_parser(mut data : String) -> String{
+    let val = data.split_off(5);
+    let length = val.len();
+
+    let resp_bulk_string = format!("${}\r\n{}\r\n" , length , val);
+
+    return resp_bulk_string
 }
