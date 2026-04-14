@@ -14,13 +14,16 @@ fn main() {
             match stream {
                 Ok(mut stream) => { 
                     loop {
-                        let mut buff = [0u8 ; 64];
+                        let mut buff = [0u8 ; 1024];
                         let bytes_read = stream.read(&mut buff).unwrap();
                         if bytes_read == 0 {
                             break;
                         }
 
-                        stream.write_all(b"+PONG\r\n").unwrap()
+                        let input = String::from_utf8_lossy(&buff[..bytes_read]);
+                        let response = handle_command(&input);
+
+                        stream.write_all(response.as_bytes()).unwrap()
                     }
                 }
                 Err(e) => {
@@ -31,11 +34,11 @@ fn main() {
     }
 }
 
-fn _redis_parser(mut data : String) -> String{
-    let val = data.split_off(5);
-    let length = val.len();
+fn handle_command(input : &str) -> String{
+   let input =  input.trim();
 
-    let resp_bulk_string = format!("${}\r\n{}\r\n" , length , val);
+   if !input.starts_with('*') {
+        return "+PONG\r\n".to_string();
+    }
 
-    return resp_bulk_string
 }
