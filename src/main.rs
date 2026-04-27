@@ -39,14 +39,15 @@ fn main() {
 }
 
 fn handle_command(input : &str) -> String{
-   let (first , second ) = input.split_at(5);
+   let string_iter : Vec<&str> = input.split(' ').collect();
 
-   if first.to_lowercase() == "ping" {
+   if string_iter[1] == "ping" {
         return  "PONG".to_string();
    }
 
-   if first.to_lowercase() == "echo" {
-       let length_of_string = second.len();
+   if string_iter[1] == "echo" {
+       let length_of_string = string_iter[2].len();
+       let second = string_iter[1];
        let result = format!("{length_of_string}\r\n{second}\r\n");
        return result
    }
