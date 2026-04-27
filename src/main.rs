@@ -37,8 +37,6 @@ fn main() {
 fn handle_command(input : &str) -> String{
    let input =  input.trim();
 
-   if !input.starts_with('*') {
-        return "+PONG\r\n".to_string();
-    }
-
+   let Some((first , second)) = input.split_once(' ')
+    
 }
