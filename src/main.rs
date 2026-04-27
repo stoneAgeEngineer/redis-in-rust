@@ -9,10 +9,7 @@ fn main() {
 
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
 
-    println!("Logs from your program will appear here!");
     for stream in listener.incoming() {
-
-    println!("Logs from your program will appear here!");
         thread::spawn( || {
             match stream {
                 Ok(mut stream) => { 
@@ -26,7 +23,7 @@ fn main() {
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
                         let response = handle_command(&input);
 
-                        //stream.write_all(response.as_bytes()).unwrap()
+                        stream.write_all(response.as_bytes()).unwrap()
                     }
                 }
                 Err(e) => {
