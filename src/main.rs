@@ -24,7 +24,6 @@ fn main() {
                         }
 
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
-                        println!("{:?} this is input" , input);
                         let response = handle_command(&input);
 
                         //stream.write_all(response.as_bytes()).unwrap()
