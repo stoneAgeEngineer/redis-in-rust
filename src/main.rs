@@ -42,7 +42,16 @@ fn main() {
 fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
-    println!("{:?} after split" , lines);
+    if !input.contains("\r\n") {
+         let result = raw_server_input(input , map);
+         return result
+    }
+
+    if lines.len() < 2 {
+        println!("Received non-RESP input or partial data: {:?}", lines);
+        return "".to_string(); // Ignore it or return a RESP error
+    }
+
 
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
@@ -74,6 +83,52 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String
         let second = lines[4];
         let result = format!("${length_of_string}\r\n{second}\r\n");
         return result
+    }
+
+    return "".to_string()
+}
+
+fn raw_server_input(input: &str, map: &mut HashMap<String, String>) -> String {
+    let clean_input = input.trim();
+    
+    let lines: Vec<&str> = clean_input.split_whitespace().collect();
+    
+    println!("{:?} result of raw server input", lines);
+
+    if lines.is_empty() {
+        return "".to_string();
+    }
+
+    let command = lines[0].to_lowercase();
+
+    if command == "get" {
+        if lines.len() > 1 {
+            let key = lines[1];
+            if let Some(res) = map.get(key) {
+                return format!("{}\n", res); 
+            }
+        }
+        return "(nil)\n".to_string(); 
+    }
+
+    if command == "set" { 
+        if lines.len() > 2 {
+            let key = lines[1].to_string();
+            let result = lines[2].to_string();
+
+            map.insert(key, result);
+            return "OK\n".to_string();
+        }
+        return "ERR\n".to_string();
+    }
+
+    if command == "ping" {
+        return "PONG\n".to_string();
+    }
+
+    if command == "echo" {
+        let result = lines[1..].join(" ");
+        return format!("{}\n", result);
     }
 
     "".to_string()
