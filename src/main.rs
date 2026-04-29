@@ -11,9 +11,10 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
 
     for stream in listener.incoming() {
-        thread::spawn( || {
+        thread::spawn( move || {
             match stream {
                 Ok(mut stream) => { 
+                    let mut map : HashMap<String , String> = HashMap::new();
                     loop {
                         let mut buff = [0u8 ; 1024];
                         let bytes_read = stream.read(&mut buff).unwrap();
@@ -22,7 +23,7 @@ fn main() {
                             break;
                         }
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
-                        let response = handle_command(&input);
+                        let response = handle_command(&input , &mut map);
 
                         stream.write_all(response.as_bytes()).unwrap()
                     }
@@ -38,18 +39,15 @@ fn main() {
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
-fn handle_command(input : &str) -> String{
-    let mut map : HashMap<&str , &str> = HashMap::new();
+fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
     println!("{:?} after split" , lines);
 
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
-        
-        if let Some(&res) = map.get(&key){
-            println!("{:?}" , res.to_string());
-            let length_of_string = res.to_string().len();
+        if let Some(res) = map.get(key) {
+            let length_of_string : usize = res.len();
             let second = res.to_string();
             let result = format!("${length_of_string}\r\n{second}\r\n");
             return result
@@ -58,8 +56,8 @@ fn handle_command(input : &str) -> String{
     }
 
     if lines[2].to_lowercase() == "set" { 
-        let key = lines[4];
-        let result = lines[6];
+        let key = lines[4].to_string();
+        let result = lines[6].to_string();
 
         map.insert(key , result);
         return "+OK\r\n".to_string()
