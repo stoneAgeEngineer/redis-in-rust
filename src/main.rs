@@ -48,7 +48,7 @@ fn handle_command(input : &str) -> String{
         let key = lines[4];
         
         if let Some(&res) = map.get(&key){
-            println!("result" , res.to_string());
+            println!("{:?}" , res.to_string());
             let length_of_string = res.to_string().len();
             let second = res.to_string();
             let result = format!("${length_of_string}\r\n{second}\r\n");
