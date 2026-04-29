@@ -45,7 +45,7 @@ fn handle_command(input : &str) -> String{
    //let string_iter : Vec<&str> = input.split(' ').collect();
 
    if lines[2].to_lowercase() == "ping" {
-        return  "PONG".to_string();
+        return  format!("$4\r\nPONG\r\n")
    }
 
    if lines[2].to_lowercase() == "echo" {
