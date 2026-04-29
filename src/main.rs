@@ -39,7 +39,7 @@ fn main() {
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
 fn handle_command(input : &str) -> String{
-    let mut map : HashMap<&str , String> = HashMap::new();
+    let mut map : HashMap<&str , &str> = HashMap::new();
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
     println!("{:?} after split" , lines);
@@ -47,17 +47,18 @@ fn handle_command(input : &str) -> String{
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
 
-        if let Some(res) = map.get(key){
-            return res.to_string()
+        if let Some(&res) = map.get(&key){
+            let length_of_string = res.to_string().len();
+            let second = res.to_string();
+            let result = format!("${length_of_string}\r\n{second}\r\n");
+            return result
         }
         return "$-1\r\n".to_string(); 
     }
 
     if lines[2].to_lowercase() == "set" { 
         let key = lines[4];
-       let length_of_string = lines[6].len();
-       let second = lines[6];
-       let result = format!("${length_of_string}\r\n{second}\r\n");
+       let result = lines[6];
 
        map.insert(key , result);
        return "+OK\r\n".to_string()
