@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+use std::collections::HashMap;
 use std::thread;
 use std::{io::stdin, net::TcpListener};
 use std::io::{self, Read, Write};
@@ -38,9 +39,28 @@ fn main() {
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
 fn handle_command(input : &str) -> String{
+    let mut map : HashMap<&str , String> = HashMap::new();
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
     println!("{:?} after split" , lines);
+
+    if lines[2].to_lowercase() == "get" {
+        let key = lines[4];
+
+        if let Some(res) = map.get(key){
+            return res.to_string()
+        }
+        return "$-1\r\n".to_string(); 
+    }
+
+    if lines[2].to_lowercase() == "set" { 
+        let key = lines[4];
+       let length_of_string = lines[6].len();
+       let second = lines[6];
+       let result = format!("${length_of_string}\r\n{second}\r\n");
+
+       map.insert(key , result);
+    }
 
    //let string_iter : Vec<&str> = input.split(' ').collect();
 
@@ -54,7 +74,6 @@ fn handle_command(input : &str) -> String{
        let result = format!("${length_of_string}\r\n{second}\r\n");
        return result
    }
-
 
    "".to_string()
 }
