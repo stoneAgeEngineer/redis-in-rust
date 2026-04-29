@@ -38,19 +38,19 @@ fn main() {
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
 fn handle_command(input : &str) -> String{
-    let lines : Vec<&str>  = input.split(" \r\n ").collect();
+    let lines : Vec<&str>  = input.split("\r\n").collect();
 
     println!("{:?} after split" , lines);
 
-   let string_iter : Vec<&str> = input.split(' ').collect();
+   //let string_iter : Vec<&str> = input.split(' ').collect();
 
-   if string_iter[1] == "ping" {
+   if lines[1] == "ping" {
         return  "PONG".to_string();
    }
 
-   if string_iter[1] == "echo" {
-       let length_of_string = string_iter[2].len();
-       let second = string_iter[1];
+   if lines[1] == "echo" {
+       let length_of_string = lines[2].len();
+       let second = lines[1];
        let result = format!("{length_of_string}\r\n{second}\r\n");
        return result
    }
