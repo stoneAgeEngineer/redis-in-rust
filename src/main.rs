@@ -44,13 +44,13 @@ fn handle_command(input : &str) -> String{
 
    //let string_iter : Vec<&str> = input.split(' ').collect();
 
-   if lines[1] == "ping" {
+   if lines[2] == "ping" {
         return  "PONG".to_string();
    }
 
-   if lines[1] == "echo" {
-       let length_of_string = lines[2].len();
-       let second = lines[1];
+   if lines[2] == "echo" {
+       let length_of_string = lines[4].len();
+       let second = lines[4];
        let result = format!("{length_of_string}\r\n{second}\r\n");
        return result
    }
