@@ -46,8 +46,9 @@ fn handle_command(input : &str) -> String{
 
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
-
+        
         if let Some(&res) = map.get(&key){
+            println!("result" , res.to_string());
             let length_of_string = res.to_string().len();
             let second = res.to_string();
             let result = format!("${length_of_string}\r\n{second}\r\n");
@@ -58,25 +59,25 @@ fn handle_command(input : &str) -> String{
 
     if lines[2].to_lowercase() == "set" { 
         let key = lines[4];
-       let result = lines[6];
+        let result = lines[6];
 
-       map.insert(key , result);
-       return "+OK\r\n".to_string()
+        map.insert(key , result);
+        return "+OK\r\n".to_string()
     }
 
-   //let string_iter : Vec<&str> = input.split(' ').collect();
+    //let string_iter : Vec<&str> = input.split(' ').collect();
 
-   if lines[2].to_lowercase() == "ping" {
+    if lines[2].to_lowercase() == "ping" {
         return "+PONG\r\n".to_string();
-   }
+    }
 
-   if lines[2].to_lowercase() == "echo" {
-       let length_of_string = lines[4].len();
-       let second = lines[4];
-       let result = format!("${length_of_string}\r\n{second}\r\n");
-       return result
-   }
+    if lines[2].to_lowercase() == "echo" {
+        let length_of_string = lines[4].len();
+        let second = lines[4];
+        let result = format!("${length_of_string}\r\n{second}\r\n");
+        return result
+    }
 
-   "".to_string()
+    "".to_string()
 }
 
