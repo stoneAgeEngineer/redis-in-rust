@@ -60,6 +60,7 @@ fn handle_command(input : &str) -> String{
        let result = format!("${length_of_string}\r\n{second}\r\n");
 
        map.insert(key , result);
+       return "+OK\r\n".to_string()
     }
 
    //let string_iter : Vec<&str> = input.split(' ').collect();
