@@ -1,8 +1,14 @@
 #![allow(unused_imports)]
 use std::collections::HashMap;
 use std::thread;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{io::stdin, net::TcpListener};
 use std::io::{self, Read, Write};
+
+struct HashMapValues {
+    time_to_ex : String,
+    result : String
+}
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -14,7 +20,7 @@ fn main() {
         thread::spawn( move || {
             match stream {
                 Ok(mut stream) => { 
-                    let mut map : HashMap<String , String> = HashMap::new();
+                    let mut map : HashMap<String , HashMapValues> = HashMap::new();
                     loop {
                         let mut buff = [0u8 ; 1024];
                         let bytes_read = stream.read(&mut buff).unwrap();
@@ -39,15 +45,17 @@ fn main() {
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
-fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String{
+fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
     println!("{:?} result of lines" , lines);
 
-    if !input.contains("\r\n") {
-         let result = raw_server_input(input , map);
-         return result
-    }
+    /*
+       if !input.contains("\r\n") {
+       let result = raw_server_input(input , map);
+       return result
+       }
+       */
 
     if lines.len() < 3 {
         println!("Received non-RESP input or partial data: {:?}", lines);
@@ -58,19 +66,58 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
         if let Some(res) = map.get(key) {
-            let length_of_string : usize = res.len();
-            let second = res.to_string();
-            let result = format!("${length_of_string}\r\n{second}\r\n");
-            return result
+
+            if res.time_to_ex.is_empty() {
+                let time_val : Vec<&str> = res.time_to_ex.split(":").collect();
+
+                let ttl_value : u128 = time_val[1].parse().unwrap();
+                let created_at : u128 = time_val[2].parse().unwrap();
+
+                let now  = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+                let elasped = now - created_at;
+
+                if lines[0] == "PK" {
+                    if elasped > ttl_value {
+                        let length_of_string : usize = res.result.len();
+                        let second = res.result.to_string();
+                        let result = format!("${length_of_string}\r\n{second}\r\n");
+                        return result
+                    }else if elasped < ttl_value {
+                        map.remove(key);
+                        return "$-1\r\n".to_string(); 
+                    }
+                }
+
+                if lines[0] == "EX" {
+                    if elasped > (ttl_value * 1000) {
+                        let length_of_string : usize = res.result.len();
+                        let second = res.result.to_string();
+                        let result = format!("${length_of_string}\r\n{second}\r\n");
+                        return result
+                    }else if elasped < (ttl_value * 1000) {
+                        map.remove(key);
+                        return "$-1\r\n".to_string(); 
+                    }
+                }
+            }
         }
         return "$-1\r\n".to_string(); 
     }
 
     if lines[2].to_lowercase() == "set" { 
-        let key = lines[4].to_string();
-        let result = lines[6].to_string();
+        let mut time_to_ex = String::new() ;
 
-        map.insert(key , result);
+        if lines.len() >= 10 {
+            let now_mill_sec = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+            time_to_ex = format!("{}:{}:{}" , lines[8] , lines[10] , now_mill_sec);
+        }
+        let key =  lines[4].to_string();
+        let final_result = HashMapValues{
+            time_to_ex : time_to_ex,
+            result : lines[6].to_string()
+        };
+
+        map.insert(key , final_result);
         return "+OK\r\n".to_string()
     }
 
@@ -90,49 +137,51 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String
     return "".to_string()
 }
 
-fn raw_server_input(input: &str, map: &mut HashMap<String, String>) -> String {
-    let clean_input = input.trim();
-    
-    let lines: Vec<&str> = clean_input.split_whitespace().collect();
-    
-    println!("{:?} result of raw server input", lines);
+/*
+   fn raw_server_input(input: &str, map: &mut HashMap<String, HashMapValues>) -> String {
+   let clean_input = input.trim();
 
-    if lines.is_empty() {
-        return "".to_string();
-    }
+   let lines: Vec<&str> = clean_input.split_whitespace().collect();
 
-    let command = lines[0].to_lowercase();
+   println!("{:?} result of raw server input", lines);
 
-    if command == "get" {
-        if lines.len() > 1 {
-            let key = lines[1];
-            if let Some(res) = map.get(key) {
-                return format!("{}\n", res); 
-            }
-        }
-        return "(nil)\n".to_string(); 
-    }
+   if lines.is_empty() {
+   return "".to_string();
+   }
 
-    if command == "set" { 
-        if lines.len() > 2 {
-            let key = lines[1].to_string();
-            let result = lines[2].to_string();
+   let command = lines[0].to_lowercase();
 
-            map.insert(key, result);
-            return "OK\n".to_string();
-        }
-        return "ERR\n".to_string();
-    }
+   if command == "get" {
+   if lines.len() > 1 {
+   let key = lines[1];
+   if let Some(res) = map.get(key) {
+   return format!("{}\n", res); 
+   }
+   }
+   return "(nil)\n".to_string(); 
+   }
 
-    if command == "ping" {
-        return "PONG\n".to_string();
-    }
+   if command == "set" { 
+   if lines.len() > 2 {
+   let key = lines[1].to_string();
+   let result = lines[2].to_string();
 
-    if command == "echo" {
-        let result = lines[1..].join(" ");
-        return format!("{}\n", result);
-    }
+   map.insert(key, result);
+   return "OK\n".to_string();
+   }
+   return "ERR\n".to_string();
+   }
 
-    "".to_string()
-}
+   if command == "ping" {
+   return "PONG\n".to_string();
+   }
+
+   if command == "echo" {
+   let result = lines[1..].join(" ");
+   return format!("{}\n", result);
+   }
+
+   "".to_string()
+   }
+   */
 
