@@ -72,6 +72,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
 
                 println!("{:?}  time_val" , time_val);
 
+                let ttl_type = lines[0];
                 let ttl_value : u128 = time_val[1].parse().unwrap();
                 let created_at : u128 = time_val[2].parse().unwrap();
 
@@ -80,7 +81,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                 let now  = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
                 let elasped = now - created_at;
 
-                if lines[0].to_uppercase() == "PX" {
+                if ttl_type.to_uppercase() == "PX" {
                     println!("Inside px");
                     if elasped > ttl_value {
 
@@ -95,7 +96,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                     }
                 }
 
-                if lines[0].to_uppercase() == "EX" {
+                if ttl_type.to_uppercase() == "EX" {
                     if elasped > (ttl_value * 1000) {
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
