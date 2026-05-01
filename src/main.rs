@@ -72,11 +72,11 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
 
                 println!("{:?}  time_val" , time_val);
 
-                let ttl_type = lines[0];
+                let ttl_type = time_val[0];
                 let ttl_value : u128 = time_val[1].parse().unwrap();
                 let created_at : u128 = time_val[2].parse().unwrap();
 
-                println!("{:?} ,  {:?}  ttl , created_at" , ttl_value , created_at);
+                println!("{:?} ,  {:?} , {:?}  ttl , created_at , ttl_type" , ttl_value , created_at , ttl_type);
 
                 let now  = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
                 let elasped = now - created_at;
