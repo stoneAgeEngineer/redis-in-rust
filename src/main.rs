@@ -42,12 +42,14 @@ fn main() {
 fn handle_command(input : &str ,  map : &mut HashMap<String , String>) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
+    println!("{:?} result of lines" , lines);
+
     if !input.contains("\r\n") {
          let result = raw_server_input(input , map);
          return result
     }
 
-    if lines.len() < 2 {
+    if lines.len() < 3 {
         println!("Received non-RESP input or partial data: {:?}", lines);
         return "".to_string(); // Ignore it or return a RESP error
     }
