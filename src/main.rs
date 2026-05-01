@@ -109,6 +109,10 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                     }
                 }
             }
+            let length_of_string : usize = res.result.len();
+            let second = res.result.to_string();
+            let result = format!("${length_of_string}\r\n{second}\r\n");
+            return result
         }
         return "$-1\r\n".to_string(); 
     }
@@ -120,6 +124,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
             let now_mill_sec = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
             time_to_ex = format!("{}:{}:{}" , lines[8] , lines[10] , now_mill_sec);
         }
+
         let key =  lines[4].to_string();
         let final_result = HashMapValues{
             time_to_ex : time_to_ex,
