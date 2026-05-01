@@ -67,7 +67,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
         let key = lines[4];
         if let Some(res) = map.get(key) {
 
-            if res.time_to_ex.is_empty() {
+            if !res.time_to_ex.is_empty() {
                 let time_val : Vec<&str> = res.time_to_ex.split(":").collect();
 
                 let ttl_value : u128 = time_val[1].parse().unwrap();
