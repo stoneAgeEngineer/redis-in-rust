@@ -76,7 +76,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                 let now  = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
                 let elasped = now - created_at;
 
-                if lines[0] == "PK" {
+                if lines[0] == "PX" {
                     if elasped > ttl_value {
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
