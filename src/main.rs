@@ -70,14 +70,21 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
             if !res.time_to_ex.is_empty() {
                 let time_val : Vec<&str> = res.time_to_ex.split(":").collect();
 
+                println!("{:?}  time_val" , time_val);
+
                 let ttl_value : u128 = time_val[1].parse().unwrap();
                 let created_at : u128 = time_val[2].parse().unwrap();
+
+                println!("{:?} ,  {:?}  ttl , created_at" , ttl_value , created_at);
 
                 let now  = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
                 let elasped = now - created_at;
 
                 if lines[0] == "PX" {
+                    println!("Inside px");
                     if elasped > ttl_value {
+
+                        println!("elased greater than ttl");
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
                         let result = format!("${length_of_string}\r\n{second}\r\n");
