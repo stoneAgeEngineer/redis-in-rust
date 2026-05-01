@@ -84,7 +84,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                 if ttl_type.to_uppercase() == "PX" {
                     println!("Inside px");
 
-                    if elasped > ttl_value {
+                    if elasped >= ttl_value {
                         println!("elased greater than ttl");
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
@@ -98,7 +98,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                 }
 
                 if ttl_type.to_uppercase() == "EX" {
-                    if elasped > (ttl_value * 1000) {
+                    if elasped >= (ttl_value * 1000) {
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
                         let result = format!("${length_of_string}\r\n{second}\r\n");
