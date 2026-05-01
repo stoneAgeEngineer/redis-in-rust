@@ -83,14 +83,15 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
 
                 if ttl_type.to_uppercase() == "PX" {
                     println!("Inside px");
-                    if elasped > ttl_value {
 
+                    if elasped > ttl_value {
                         println!("elased greater than ttl");
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
                         let result = format!("${length_of_string}\r\n{second}\r\n");
                         return result
                     }else if elasped < ttl_value {
+                        println!("going inside elapsed less than ttl_value");
                         map.remove(key);
                         return "$-1\r\n".to_string(); 
                     }
