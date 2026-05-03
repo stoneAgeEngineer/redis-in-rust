@@ -42,6 +42,7 @@ fn main() {
     }
 }
 
+
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
@@ -64,6 +65,10 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
 
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "whoami" {
         return format!("$7\r\ndefault\r\n");
+    }
+
+    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "getuser" {
+        return format!("*0\r\n")
     }
 
 
@@ -106,7 +111,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
                         let length_of_string : usize = res.result.len();
                         let second = res.result.to_string();
                         let result = format!("${length_of_string}\r\n{second}\r\n");
-                        return result
+                        return result;
                     }else if elasped < (ttl_value * 1000) {
                         map.remove(key);
                         return "$-1\r\n".to_string(); 
@@ -116,7 +121,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
             let length_of_string : usize = res.result.len();
             let second = res.result.to_string();
             let result = format!("${length_of_string}\r\n{second}\r\n");
-            return result
+            return result;
         }
         return "$-1\r\n".to_string(); 
     }
