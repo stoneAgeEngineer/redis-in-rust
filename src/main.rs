@@ -10,6 +10,11 @@ struct HashMapValues {
     result : String
 }
 
+struct UserHashMapValues {
+    username : String,
+    result : String
+}
+
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
@@ -158,6 +163,10 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
     }
 
     return "".to_string()
+}
+
+fn handle_user(input : &str , map : HashMap<>) {
+    
 }
 
 /*
