@@ -62,6 +62,10 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
         return "".to_string(); // Ignore it or return a RESP error
     }
 
+    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "whoami" {
+        return format!("$7\r\ndefault\r\n");
+    }
+
 
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
