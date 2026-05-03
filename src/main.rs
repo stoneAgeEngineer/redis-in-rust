@@ -68,7 +68,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues>) ->
     }
 
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "getuser" {
-        return format!("*2\r\n")
+        return format!("*2\r\n$5\r\nflags\r\n*0\r\n")
     }
 
 
