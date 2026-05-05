@@ -69,6 +69,9 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
     }
 
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "getuser" {
+        if let Some(res) =  user_map.get(lines[6]){
+            return format!("*4\r\n$5\r\nflags\r\n*0\r\n$9\r\npasswords\r\n*1\r\n${}\r\n{}\r\n" , res.len() , res)
+        }
         return format!("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n")
     }
 
