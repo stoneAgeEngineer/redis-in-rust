@@ -10,11 +10,6 @@ struct HashMapValues {
     result : String
 }
 
-struct UserHashMapValues {
-    username : String,
-    result : String
-}
-
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
@@ -78,6 +73,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
     }
 
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
+        println!("inside user_map setuser");
         lines[8].to_string();
         let mut final_val = String::new();
         for (i , char) in lines[8].char_indices() {
