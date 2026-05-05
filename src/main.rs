@@ -77,7 +77,16 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         return format!("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n")
     }
 
-    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8] == ">" {
+    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
+        lines[8].to_string();
+        let mut final_val = String::new();
+        for (i , char) in lines[8].char_indices() {
+            if i == 0 {
+                continue
+            }
+            final_val.push(char)
+        }
+
         let result = sha256::digest(lines[10]);
         user_map.insert(lines[6].to_string() , result);
         return "+OK\r\n".to_string()
