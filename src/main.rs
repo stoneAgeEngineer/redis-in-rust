@@ -76,8 +76,9 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         println!("inside user_map setuser");
         lines[8].to_string();
         let mut final_val = String::new();
-        for (i , char) in lines[8].char_indices() {
-            if i == 0 {
+        for (_i , char) in lines[8].char_indices() {
+            println!("{:?} , char",char);
+            if char == '>' {
                 continue
             }
             final_val.push(char)
