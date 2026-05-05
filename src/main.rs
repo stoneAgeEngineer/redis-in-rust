@@ -82,7 +82,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
                return "+OK\r\n".to_string();
            }
 
-           return "WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
+           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
          }
     }
 
