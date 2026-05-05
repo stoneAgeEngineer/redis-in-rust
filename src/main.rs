@@ -77,14 +77,13 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         lines[8].to_string();
         let mut final_val = String::new();
         for (_i , char) in lines[8].char_indices() {
-            println!("{:?} , char",char);
             if char == '>' {
                 continue
             }
             final_val.push(char)
         }
 
-        let result = sha256::digest(lines[10]);
+        let result = sha256::digest(final_val);
         user_map.insert(lines[6].to_string() , result);
         return "+OK\r\n".to_string()
     }
