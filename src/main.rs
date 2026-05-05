@@ -59,33 +59,6 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
        }
        */
 
-    if lines.len() < 3 {
-        println!("Received non-RESP input or partial data: {:?}", lines);
-        return "".to_string(); // Ignore it or return a RESP error
-    }
-
-    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "whoami" {
-        return format!("$7\r\ndefault\r\n");
-    }
-
-    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "getuser" {
-        if let Some(res) =  user_map.get(lines[6]){
-            return format!("*4\r\n$5\r\nflags\r\n*0\r\n$9\r\npasswords\r\n*1\r\n${}\r\n{}\r\n" , res.len() , res)
-        }
-        return format!("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n")
-    }
-
-    if lines[2].to_lowercase() == "auth" {
-         if let Some(res) = user_map.get(lines[4]){
-           let pass_provided = sha256::digest(lines[6]) ;
-           if *res == pass_provided {
-               return "+OK\r\n".to_string();
-           }
-
-           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
-         }
-    }
-
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
         println!("inside user_map setuser");
         lines[8].to_string();
@@ -101,6 +74,43 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         user_map.insert(lines[6].to_string() , result);
         return "+OK\r\n".to_string()
     }
+
+    if let Some(res) = user_map.get("default") {
+
+    }else{
+        return "-NOAUTH Authentication required.\r\n".to_string();
+    }
+
+    if lines.len() < 3 {
+        println!("Received non-RESP input or partial data: {:?}", lines);
+        return "".to_string(); // Ignore it or return a RESP error
+    }
+
+    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "whoami" {
+        return format!("$7\r\ndefault\r\n");
+    }
+
+    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "getuser" {
+        if let Some(res) =  user_map.get(lines[6]){ // return nopass in array because user is
+                                                    // authenticated
+            return format!("*4\r\n$5\r\nflags\r\n*0\r\n$9\r\npasswords\r\n*1\r\n${}\r\n{}\r\n" , res.len() , res)
+        }
+        return format!("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n")
+    }
+
+    // for auth they send like this auth <username> <password> - authenticates current connection
+    // with a specified username
+    if lines[2].to_lowercase() == "auth" {
+         if let Some(res) = user_map.get(lines[4]){
+           let pass_provided = sha256::digest(lines[6]) ;
+           if *res == pass_provided {
+               return "+OK\r\n".to_string();
+           }
+
+           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
+         }
+    }
+
 
 
     if lines[2].to_lowercase() == "get" {
