@@ -75,6 +75,17 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         return format!("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n")
     }
 
+    if lines[2].to_lowercase() == "auth" {
+         if let Some(res) = user_map.get(lines[4]){
+           let pass_provided = sha256::digest(lines[6]) ;
+           if *res == pass_provided {
+               return "+OK\r\n".to_string();
+           }
+
+           return "-Error WRONGPASS invalid username-password pair or user is disabled".to_string()
+         }
+    }
+
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
         println!("inside user_map setuser");
         lines[8].to_string();
