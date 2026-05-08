@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{io::stdin, net::TcpListener};
@@ -15,6 +16,8 @@ fn main() {
     println!("Logs from your program will appear here!");
 
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+
+    let user_db : Arc<Mutex<HashMap<String , String>>> =  Arc::new(Mutex::new(HashMap::new()));
 
     for stream in listener.incoming() {
         thread::spawn( move || {
@@ -42,6 +45,10 @@ fn main() {
             }
         });
     }
+}
+
+fn handle_client(){
+
 }
 
 
