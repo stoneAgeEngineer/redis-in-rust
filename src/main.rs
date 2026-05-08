@@ -22,7 +22,7 @@ fn main() {
                 Ok(mut stream) => { 
                     let mut map : HashMap<String , HashMapValues> = HashMap::new();
                     let mut user_map : HashMap<String , String> = HashMap::new();
-                    let mut is_authenticated = false;
+                    let mut is_authenticated :Option<bool> = None ;
                     loop {
                         let mut buff = [0u8 ; 1024];
                         let bytes_read = stream.read(&mut buff).unwrap();
@@ -31,7 +31,7 @@ fn main() {
                             break;
                         }
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
-                        let response = handle_command(&input , &mut map , &mut user_map ,  &mut is_authenticated);
+                        let response = handle_command(&input , &mut map , &mut user_map , &mut is_authenticated);
 
                         stream.write_all(response.as_bytes()).unwrap()
                     }
@@ -48,7 +48,7 @@ fn main() {
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
-fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , user_map : &mut HashMap<String , String> , is_authenticated : &mut bool) -> String{
+fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , user_map : &mut HashMap<String , String> , is_authenticated : &mut Option<bool>) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
 
     println!("{:?} result of lines" , lines);
@@ -59,6 +59,20 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
        return result
        }
        */
+
+
+    // for auth they send like this auth <username> <password> - authenticates current connection
+    // with a specified username
+    if lines[2].to_lowercase() == "auth" {
+         if let Some(res) = user_map.get(lines[4]){
+           let pass_provided = sha256::digest(lines[6]) ;
+           if *res == pass_provided {
+               *is_authenticated = Some(true);
+               return "+OK\r\n".to_string();
+           }
+           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
+         }
+    }
 
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
         println!("inside user_map setuser");
@@ -73,28 +87,13 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
 
         let result = sha256::digest(final_val);
         user_map.insert(lines[6].to_string() , result);
-        *is_authenticated = true;
+        *is_authenticated = Some(true);
         return "+OK\r\n".to_string()
     }
 
-    // for auth they send like this auth <username> <password> - authenticates current connection
-    // with a specified username
-    if lines[2].to_lowercase() == "auth" {
-         if let Some(res) = user_map.get(lines[4]){
-           let pass_provided = sha256::digest(lines[6]) ;
-           if *res == pass_provided {
-               *is_authenticated = true;
-               return "+OK\r\n".to_string();
-           }
-           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
-         }
-    }
-
-    if !*is_authenticated {
-        return "-NOAUTH Authentication required.\r\n".to_string();
-    }
-
-
+    if let Some(false) = is_authenticated{
+        return "-NOAUTH Authentication required.".to_string()
+    };
 
     if lines.len() < 3 {
         println!("Received non-RESP input or partial data: {:?}", lines);
@@ -112,9 +111,6 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         }
         return format!("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n")
     }
-
-
-
 
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
