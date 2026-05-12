@@ -78,9 +78,9 @@ fn handle_command(
     let mut users = user_db_arc.lock().unwrap();
     let requires_password = users.contains_key(current_user.as_str());
 
-    let command = lines[2].to_lowercase();
     // for auth they send like this auth <username> <password> - authenticates current connection
     // with a specified username
+    let command = lines[2].to_lowercase();
     if command == "auth" {
         if let Some(expected_hash) = users.get(lines[4]) {
             let pass_provided = sha256::digest(lines[6]);
@@ -94,13 +94,11 @@ fn handle_command(
         return "-ERR user not found\r\n".to_string();
     }
 
-    // 4. THE MAGIC CHECK: Enforce authentication for all other commands
-    // If the global database says this user needs a password, and this connection isn't authenticated yet:
     if requires_password && !*is_authenticated {
         return "-NOAUTH Authentication required.\r\n".to_string();
     }
 
-    // 5. Handle ACL SETUSER Command
+
     if command == "acl" && lines.len() > 4 && lines[4].to_lowercase() == "setuser" && lines[8].contains(">") {
         let username = lines[6].to_string();
         
@@ -116,6 +114,8 @@ fn handle_command(
         *is_authenticated = true; 
         return "+OK\r\n".to_string();
     }
+
+    drop(users);
 
 
     if lines.len() < 3 {
