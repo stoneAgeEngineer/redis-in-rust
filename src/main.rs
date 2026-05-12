@@ -164,10 +164,9 @@ fn handle_command(
                         return result
                     }else if elasped > ttl_value {
                         println!("going inside elapsed less than ttl_value");
-                        //map_arc.lock().unwrap().remove(key);
                         return "$-1\r\n".to_string(); 
                     }
-                }
+                } 
 
                 if ttl_type.to_uppercase() == "EX" {
                     if elasped <= (ttl_value * 1000) {
