@@ -94,7 +94,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
     }
 
     if let Some(false) = is_authenticated{
-        return "-NOAUTH Authentication required.".to_string()
+        return "-NOAUTH Authentication required.\r\n".to_string()
     };
 
     if lines.len() < 3 {
