@@ -18,14 +18,14 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
 
     let user_db : Arc<Mutex<HashMap<String , String>>> =  Arc::new(Mutex::new(HashMap::new()));
-
+    let mut is_authenticated :Option<bool> = None ;
+    is_authenticated = Some(false);
     for stream in listener.incoming() {
         thread::spawn( move || {
             match stream {
                 Ok(mut stream) => { 
                     let mut map : HashMap<String , HashMapValues> = HashMap::new();
                     let mut user_map : HashMap<String , String> = HashMap::new();
-                    let mut is_authenticated :Option<bool> = None ;
                     loop {
                         let mut buff = [0u8 ; 1024];
                         let bytes_read = stream.read(&mut buff).unwrap();
