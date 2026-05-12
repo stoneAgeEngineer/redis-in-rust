@@ -20,6 +20,7 @@ fn main() {
     let user_db : Arc<Mutex<HashMap<String , String>>> =  Arc::new(Mutex::new(HashMap::new()));
     let mut is_authenticated :Option<bool> = None ;
     is_authenticated = Some(false);
+    let mut no_pass = true;
     for stream in listener.incoming() {
         thread::spawn( move || {
             match stream {
@@ -35,7 +36,7 @@ fn main() {
                         }
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
 
-                        let response = handle_command(&input , &mut map , &mut user_map , &mut is_authenticated);
+                        let response = handle_command(&input , &mut map , &mut user_map , &mut is_authenticated , &mut no_pass);
 
                         stream.write_all(response.as_bytes()).unwrap()
                     }
@@ -51,7 +52,7 @@ fn main() {
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
-fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , user_map : &mut HashMap<String , String> , is_authenticated : &mut Option<bool>) -> String{
+fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , user_map : &mut HashMap<String , String> , is_authenticated : &mut Option<bool> , no_pass : &mut bool) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
     println!("{:?} result of lines" , lines);
 
@@ -65,13 +66,13 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
 
     // for auth they send like this auth <username> <password> - authenticates current connection
     // with a specified username
-    let auth_response = handle_auth(lines.clone(), is_authenticated , user_map);
+    let auth_response = handle_auth(lines.clone(), is_authenticated , user_map , no_pass);
 
     if !auth_response.is_empty() {
         return auth_response
     }
 
-    if let Some(false) = is_authenticated{
+    if let Some(false) = is_authenticated && *no_pass == false{
         return "-NOAUTH Authentication required.\r\n".to_string()
     };
 
@@ -181,12 +182,13 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
     return "".to_string()
 }
 
-fn handle_auth(lines : Vec<&str> , is_authenticated : &mut Option<bool> , user_map : &mut HashMap<String , String>) -> String{
+fn handle_auth(lines : Vec<&str> , is_authenticated : &mut Option<bool> , user_map : &mut HashMap<String , String>,  no_pass : &mut bool) -> String{
     if lines[2].to_lowercase() == "auth" {
          if let Some(res) = user_map.get(lines[4]){
            let pass_provided = sha256::digest(lines[6]) ;
            if *res == pass_provided {
                *is_authenticated = Some(true);
+               *no_pass = false;
                return "+OK\r\n".to_string();
            }
            return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
@@ -207,6 +209,7 @@ fn handle_auth(lines : Vec<&str> , is_authenticated : &mut Option<bool> , user_m
         let result = sha256::digest(final_val);
         user_map.insert(lines[6].to_string() , result);
         *is_authenticated = Some(true);
+        *no_pass = false;
         return "+OK\r\n".to_string()
     }
 
