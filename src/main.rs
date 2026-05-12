@@ -18,27 +18,34 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
 
     let user_db : Arc<Mutex<HashMap<String , String>>> =  Arc::new(Mutex::new(HashMap::new()));
-    let mut is_authenticated :Option<bool> = None ;
-    is_authenticated = Some(false);
-    let mut no_pass = true;
+    let map : Arc<Mutex<HashMap<String , HashMapValues>>> = Arc::new(Mutex::new(HashMap::new()));
+    let mut is_authenticated :Option<bool> = Some(false);
     for stream in listener.incoming() {
+        let thread_map = Arc::clone(&map);
+        let thread_user_db = Arc::clone(&user_db);
         thread::spawn( move || {
             match stream {
                 Ok(mut stream) => { 
-                    let mut map : HashMap<String , HashMapValues> = HashMap::new();
-                    let mut user_map : HashMap<String , String> = HashMap::new();
+                    let mut is_authenticated = false; // False until they use AUTH
+                    let mut current_user = "default".to_string(); // Every connection starts as 'default'
+
                     loop {
-                        let mut buff = [0u8 ; 1024];
+                        let mut buff = [0u8; 1024];
                         let bytes_read = stream.read(&mut buff).unwrap();
 
-                        if bytes_read == 0 {
-                            break;
-                        }
+                        if bytes_read == 0 { break; }
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
 
-                        let response = handle_command(&input , &mut map , &mut user_map , &mut is_authenticated , &mut no_pass);
+                        // Pass the Arcs and state to the handler
+                        let response = handle_command(
+                            &input, 
+                            &thread_map, 
+                            &thread_user_db, 
+                            &mut is_authenticated, 
+                            &mut current_user
+                        );
 
-                        stream.write_all(response.as_bytes()).unwrap()
+                        stream.write_all(response.as_bytes()).unwrap();
                     }
                 }
                 Err(e) => {
@@ -52,7 +59,13 @@ fn main() {
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
-fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , user_map : &mut HashMap<String , String> , is_authenticated : &mut Option<bool> , no_pass : &mut bool) -> String{
+fn handle_command(
+    input: &str, 
+    map_arc: &Arc<Mutex<HashMap<String, HashMapValues>>>, 
+    user_db_arc: &Arc<Mutex<HashMap<String, String>>>, 
+    is_authenticated: &mut bool, 
+    current_user: &mut String
+) -> String {
     let lines : Vec<&str>  = input.split("\r\n").collect();
     println!("{:?} result of lines" , lines);
 
@@ -62,19 +75,47 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
        return result
        }
        */
+    let mut users = user_db_arc.lock().unwrap();
+    let requires_password = users.contains_key(current_user.as_str());
 
-
+    let command = lines[2].to_lowercase();
     // for auth they send like this auth <username> <password> - authenticates current connection
     // with a specified username
-    let auth_response = handle_auth(lines.clone(), is_authenticated , user_map , no_pass);
-
-    if !auth_response.is_empty() {
-        return auth_response
+    if command == "auth" {
+        if let Some(expected_hash) = users.get(lines[4]) {
+            let pass_provided = sha256::digest(lines[6]);
+            if *expected_hash == pass_provided {
+                *is_authenticated = true;
+                *current_user = lines[4].to_string(); // Update connection's identity
+                return "+OK\r\n".to_string();
+            }
+            return "-WRONGPASS invalid username-password pair\r\n".to_string();
+        }
+        return "-ERR user not found\r\n".to_string();
     }
 
-    if let Some(false) = is_authenticated && *no_pass == false{
-        return "-NOAUTH Authentication required.\r\n".to_string()
-    };
+    // 4. THE MAGIC CHECK: Enforce authentication for all other commands
+    // If the global database says this user needs a password, and this connection isn't authenticated yet:
+    if requires_password && !*is_authenticated {
+        return "-NOAUTH Authentication required.\r\n".to_string();
+    }
+
+    // 5. Handle ACL SETUSER Command
+    if command == "acl" && lines.len() > 4 && lines[4].to_lowercase() == "setuser" && lines[8].contains(">") {
+        let username = lines[6].to_string();
+        
+        let mut final_val = String::new();
+        for char in lines[8].chars() {
+            if char == '>' { continue; }
+            final_val.push(char);
+        }
+
+        let pass_hash = sha256::digest(final_val);
+        users.insert(username, pass_hash); // Globally save the password!
+        
+        *is_authenticated = true; 
+        return "+OK\r\n".to_string();
+    }
 
 
     if lines.len() < 3 {
@@ -87,7 +128,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
     }
 
     if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "getuser" {
-        if let Some(res) =  user_map.get(lines[6]){ // return nopass in array because user is
+        if let Some(res) =  user_db_arc.lock().unwrap().get(lines[6]){ // return nopass in array because user is
                                                     // authenticated
             return format!("*4\r\n$5\r\nflags\r\n*0\r\n$9\r\npasswords\r\n*1\r\n${}\r\n{}\r\n" , res.len() , res)
         }
@@ -96,7 +137,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
 
     if lines[2].to_lowercase() == "get" {
         let key = lines[4];
-        if let Some(res) = map.get(key) {
+        if let Some(res) = map_arc.lock().unwrap().get(key) {
 
             if !res.time_to_ex.is_empty() {
                 let time_val : Vec<&str> = res.time_to_ex.split(":").collect();
@@ -123,7 +164,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
                         return result
                     }else if elasped > ttl_value {
                         println!("going inside elapsed less than ttl_value");
-                        map.remove(key);
+                        map_arc.lock().unwrap().remove(key);
                         return "$-1\r\n".to_string(); 
                     }
                 }
@@ -135,7 +176,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
                         let result = format!("${length_of_string}\r\n{second}\r\n");
                         return result;
                     }else if elasped < (ttl_value * 1000) {
-                        map.remove(key);
+                        map_arc.lock().unwrap().remove(key);
                         return "$-1\r\n".to_string(); 
                     }
                 }
@@ -162,7 +203,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
             result : lines[6].to_string()
         };
 
-        map.insert(key , final_result);
+        map_arc.lock().unwrap().insert(key , final_result);
         return "+OK\r\n".to_string()
     }
 
