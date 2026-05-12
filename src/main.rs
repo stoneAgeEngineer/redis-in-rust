@@ -65,7 +65,11 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
 
     // for auth they send like this auth <username> <password> - authenticates current connection
     // with a specified username
-    handle_auth(lines.clone(), is_authenticated , user_map);
+    let auth_response = handle_auth(lines.clone(), is_authenticated , user_map);
+
+    if !auth_response.is_empty() {
+        return auth_response
+    }
 
     if let Some(false) = is_authenticated{
         return "-NOAUTH Authentication required.\r\n".to_string()
