@@ -65,37 +65,12 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
 
     // for auth they send like this auth <username> <password> - authenticates current connection
     // with a specified username
-    if lines[2].to_lowercase() == "auth" {
-         if let Some(res) = user_map.get(lines[4]){
-           let pass_provided = sha256::digest(lines[6]) ;
-           if *res == pass_provided {
-               *is_authenticated = Some(true);
-               return "+OK\r\n".to_string();
-           }
-           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
-         }
-    }
-
-    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
-        println!("inside user_map setuser");
-        lines[8].to_string();
-        let mut final_val = String::new();
-        for (_i , char) in lines[8].char_indices() {
-            if char == '>' {
-                continue
-            }
-            final_val.push(char)
-        }
-
-        let result = sha256::digest(final_val);
-        user_map.insert(lines[6].to_string() , result);
-        *is_authenticated = Some(true);
-        return "+OK\r\n".to_string()
-    }
+    handle_auth(lines.clone(), is_authenticated , user_map);
 
     if let Some(false) = is_authenticated{
         return "-NOAUTH Authentication required.\r\n".to_string()
     };
+
 
     if lines.len() < 3 {
         println!("Received non-RESP input or partial data: {:?}", lines);
@@ -197,6 +172,38 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
         let second = lines[4];
         let result = format!("${length_of_string}\r\n{second}\r\n");
         return result
+    }
+
+    return "".to_string()
+}
+
+fn handle_auth(lines : Vec<&str> , is_authenticated : &mut Option<bool> , user_map : &mut HashMap<String , String>) -> String{
+    if lines[2].to_lowercase() == "auth" {
+         if let Some(res) = user_map.get(lines[4]){
+           let pass_provided = sha256::digest(lines[6]) ;
+           if *res == pass_provided {
+               *is_authenticated = Some(true);
+               return "+OK\r\n".to_string();
+           }
+           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
+         }
+    }
+
+    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
+        println!("inside user_map setuser");
+        lines[8].to_string();
+        let mut final_val = String::new();
+        for (_i , char) in lines[8].char_indices() {
+            if char == '>' {
+                continue
+            }
+            final_val.push(char)
+        }
+
+        let result = sha256::digest(final_val);
+        user_map.insert(lines[6].to_string() , result);
+        *is_authenticated = Some(true);
+        return "+OK\r\n".to_string()
     }
 
     return "".to_string()
