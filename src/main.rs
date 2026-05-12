@@ -34,6 +34,8 @@ fn main() {
                             break;
                         }
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
+
+                        is_authenticated = Some(false);
                         let response = handle_command(&input , &mut map , &mut user_map , &mut is_authenticated);
 
                         stream.write_all(response.as_bytes()).unwrap()
@@ -52,7 +54,6 @@ fn main() {
 // $4 indicates a bulk string of 4 bytes
 fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , user_map : &mut HashMap<String , String> , is_authenticated : &mut Option<bool>) -> String{
     let lines : Vec<&str>  = input.split("\r\n").collect();
-    *is_authenticated = Some(false);
     println!("{:?} result of lines" , lines);
 
     /*
