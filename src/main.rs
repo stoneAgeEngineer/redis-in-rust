@@ -47,11 +47,6 @@ fn main() {
     }
 }
 
-fn handle_client(){
-
-}
-
-
 //program sends data in RESP format like this -> *2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n
 // *2 indicates an array with 2 elements
 // $4 indicates a bulk string of 4 bytes
