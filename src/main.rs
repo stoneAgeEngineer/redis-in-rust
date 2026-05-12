@@ -35,7 +35,6 @@ fn main() {
                         }
                         let input = String::from_utf8_lossy(&buff[..bytes_read]);
 
-                        is_authenticated = Some(false);
                         let response = handle_command(&input , &mut map , &mut user_map , &mut is_authenticated);
 
                         stream.write_all(response.as_bytes()).unwrap()
@@ -70,7 +69,7 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
          if let Some(res) = user_map.get(lines[4]){
            let pass_provided = sha256::digest(lines[6]) ;
            if *res == pass_provided {
-               *is_authenticated = Some(true);
+               //*is_authenticated = Some(true);
                return "+OK\r\n".to_string();
            }
            return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
@@ -90,13 +89,15 @@ fn handle_command(input : &str ,  map : &mut HashMap<String , HashMapValues> , u
 
         let result = sha256::digest(final_val);
         user_map.insert(lines[6].to_string() , result);
-        *is_authenticated = Some(true);
+        //*is_authenticated = Some(true);
         return "+OK\r\n".to_string()
     }
 
+    /*
     if let Some(false) = is_authenticated{
         return "-NOAUTH Authentication required.\r\n".to_string()
     };
+    */
 
     if lines.len() < 3 {
         println!("Received non-RESP input or partial data: {:?}", lines);
