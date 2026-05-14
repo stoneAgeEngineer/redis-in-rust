@@ -22,7 +22,7 @@ fn main() {
     let user_db : Arc<Mutex<HashMap<String , String>>> =  Arc::new(Mutex::new(HashMap::new()));
     let map : Arc<Mutex<HashMap<String , HashMapValues>>> = Arc::new(Mutex::new(HashMap::new()));
     let mut is_authenticated :Option<bool> = Some(false);
-    let mut list_array : Arc<Mutex<Vec <HashMap<String, Box<dyn Any + Send> >>> > =  Arc::new(Mutex::new(Vec::new()));
+    let list_array: Arc<Mutex<HashMap<String, Vec<String>>>> = Arc::new(Mutex::new(HashMap::new()));
 
     for stream in listener.incoming() {
         let thread_map = Arc::clone(&map);
@@ -71,7 +71,7 @@ fn handle_command(
     user_db_arc: &Arc<Mutex<HashMap<String, String>>>, 
     is_authenticated: &mut bool, 
     current_user: &mut String,
-    list_array : &Arc<Mutex<Vec<HashMap< String , Box<dyn Any + Send>>>>>
+    list_array : &Arc<Mutex<HashMap< String , Vec<String> >>>
 ) -> String {
     let lines : Vec<&str>  = input.split("\r\n").collect();
     println!("{:?} result of lines" , lines);
@@ -107,23 +107,14 @@ fn handle_command(
 
     if lines[2].to_lowercase() == "rpush" {
         let key = lines[4].to_string();
-        let values  : Box<dyn Any + Send> = Box::new(lines[6].to_string());
+        let values = lines[6].to_string();
         let mut list_guard = list_array.lock().unwrap();
 
-        for map in list_guard.iter_mut() {
-            if map.contains_key(&key) {
-                println!("Found key in list guard");
-                map.insert(key, values);
-                return format!(":{}\r\n" , map.values().len())
-            }
-        }
+        let list_for_key = list_guard.entry(key).or_insert_with(Vec::new);
 
-       let mut new_hashmap : HashMap<String, Box<dyn Any + Send>> = HashMap::new();
-       new_hashmap.insert(key , values);
-       let hashmap_len = new_hashmap.len();
-       list_guard.push(new_hashmap);
+       //list_guard.push(new_hashmap);
 
-       return format!(":{}\r\n" , hashmap_len)
+       //return format!(":{}\r\n" , hashmap_len)
     }
 
 
