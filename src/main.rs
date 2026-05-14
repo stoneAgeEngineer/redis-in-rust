@@ -112,6 +112,7 @@ fn handle_command(
 
         for map in list_guard.iter_mut() {
             if map.contains_key(&key) {
+                println!("Found key in list guard");
                 map.insert(key, values);
                 return format!(":{}\r\n" , map.len())
             }
