@@ -23,6 +23,7 @@ fn main() {
     let map : Arc<Mutex<HashMap<String , HashMapValues>>> = Arc::new(Mutex::new(HashMap::new()));
     let mut is_authenticated :Option<bool> = Some(false);
     let mut list_array : Arc<Mutex<Vec <HashMap<String, Box<dyn Any + Send> >>> > =  Arc::new(Mutex::new(Vec::new()));
+
     for stream in listener.incoming() {
         let thread_map = Arc::clone(&map);
         let thread_user_db = Arc::clone(&user_db);
@@ -105,8 +106,22 @@ fn handle_command(
     }
 
     if lines[2].to_lowercase() == "rpush" {
-       let mut new_hashmap : HashMap<String, String> = HashMap::new();
-       new_hashmap.insert(lines[2].to_string(), lines[4].to_string());
+
+        let key = lines[4].to_string();
+        let values  : Box<dyn Any + Send> = Box::new(lines[6].to_string());
+        let mut list_guard = list_array.lock().unwrap();
+
+        for map in list_guard.iter_mut() {
+            if map.contains_key(&key) {
+                map.insert(key, values);
+                return format!(":{}\r\n" , map.len())
+            }
+        }
+
+       let mut new_hashmap : HashMap<String, Box<dyn Any + Send>> = HashMap::new();
+       new_hashmap.insert(key , values);
+
+
 
        return format!(":{}\r\n" , new_hashmap.len())
     }
@@ -234,41 +249,6 @@ fn handle_command(
 
     return "".to_string()
 }
-
-fn handle_auth(lines : Vec<&str> , is_authenticated : &mut Option<bool> , user_map : &mut HashMap<String , String>,  no_pass : &mut bool) -> String{
-    if lines[2].to_lowercase() == "auth" {
-         if let Some(res) = user_map.get(lines[4]){
-           let pass_provided = sha256::digest(lines[6]) ;
-           if *res == pass_provided {
-               *is_authenticated = Some(true);
-               *no_pass = false;
-               return "+OK\r\n".to_string();
-           }
-           return "-WRONGPASS invalid username-password pair or user is disabled\r\n".to_string()
-         }
-    }
-
-    if lines[2].to_lowercase() == "acl" && lines[4].to_lowercase() == "setuser" && lines[8].contains(">"){
-        println!("inside user_map setuser");
-        lines[8].to_string();
-        let mut final_val = String::new();
-        for (_i , char) in lines[8].char_indices() {
-            if char == '>' {
-                continue
-            }
-            final_val.push(char)
-        }
-
-        let result = sha256::digest(final_val);
-        user_map.insert(lines[6].to_string() , result);
-        *is_authenticated = Some(true);
-        *no_pass = false;
-        return "+OK\r\n".to_string()
-    }
-
-    return "".to_string()
-}
-
 /*
    fn raw_server_input(input: &str, map: &mut HashMap<String, HashMapValues>) -> String {
    let clean_input = input.trim();
