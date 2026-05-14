@@ -108,7 +108,7 @@ fn handle_command(
        let mut new_hashmap : HashMap<String, String> = HashMap::new();
        new_hashmap.insert(lines[2].to_string(), lines[4].to_string());
 
-       return format!(":{}/r/n" , new_hashmap.len())
+       return format!(":{}\r\n" , new_hashmap.len())
     }
 
 
