@@ -112,9 +112,9 @@ fn handle_command(
 
         let list_for_key = list_guard.entry(key).or_insert_with(Vec::new);
 
-       //list_guard.push(new_hashmap);
+       list_for_key.push(values);
 
-       //return format!(":{}\r\n" , hashmap_len)
+       return format!(":{}\r\n" , list_for_key.len())
     }
 
 
