@@ -106,7 +106,6 @@ fn handle_command(
     }
 
     if lines[2].to_lowercase() == "rpush" {
-
         let key = lines[4].to_string();
         let values  : Box<dyn Any + Send> = Box::new(lines[6].to_string());
         let mut list_guard = list_array.lock().unwrap();
@@ -120,10 +119,10 @@ fn handle_command(
 
        let mut new_hashmap : HashMap<String, Box<dyn Any + Send>> = HashMap::new();
        new_hashmap.insert(key , values);
+       let hashmap_len = new_hashmap.len();
+       list_array.lock().unwrap().push(new_hashmap);
 
-
-
-       return format!(":{}\r\n" , new_hashmap.len())
+       return format!(":{}\r\n" , hashmap_len)
     }
 
 
