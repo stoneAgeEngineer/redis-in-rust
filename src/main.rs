@@ -1,10 +1,12 @@
 #![allow(unused_imports)]
+use std::any::Any;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{io::stdin, net::TcpListener};
 use std::io::{self, Read, Write};
+use maplit::hashmap;
 
 struct HashMapValues {
     time_to_ex : String,
@@ -20,9 +22,11 @@ fn main() {
     let user_db : Arc<Mutex<HashMap<String , String>>> =  Arc::new(Mutex::new(HashMap::new()));
     let map : Arc<Mutex<HashMap<String , HashMapValues>>> = Arc::new(Mutex::new(HashMap::new()));
     let mut is_authenticated :Option<bool> = Some(false);
+    let mut list_array : Arc<Mutex<Vec <HashMap<String, Box<dyn Any + Send> >>> > =  Arc::new(Mutex::new(Vec::new()));
     for stream in listener.incoming() {
         let thread_map = Arc::clone(&map);
         let thread_user_db = Arc::clone(&user_db);
+        let mut thread_list_array = Arc::clone(&list_array);
         thread::spawn( move || {
             match stream {
                 Ok(mut stream) => { 
@@ -42,7 +46,8 @@ fn main() {
                             &thread_map, 
                             &thread_user_db, 
                             &mut is_authenticated, 
-                            &mut current_user
+                            &mut current_user,
+                            &mut thread_list_array
                         );
 
                         stream.write_all(response.as_bytes()).unwrap();
@@ -64,7 +69,8 @@ fn handle_command(
     map_arc: &Arc<Mutex<HashMap<String, HashMapValues>>>, 
     user_db_arc: &Arc<Mutex<HashMap<String, String>>>, 
     is_authenticated: &mut bool, 
-    current_user: &mut String
+    current_user: &mut String,
+    list_array : &Arc<Mutex<Vec<HashMap< String , Box<dyn Any + Send>>>>>
 ) -> String {
     let lines : Vec<&str>  = input.split("\r\n").collect();
     println!("{:?} result of lines" , lines);
@@ -96,6 +102,13 @@ fn handle_command(
 
     if requires_password && !*is_authenticated {
         return "-NOAUTH Authentication required.\r\n".to_string();
+    }
+
+    if lines[2].to_lowercase() == "rpush" {
+       let mut new_hashmap : HashMap<String, String> = HashMap::new();
+       new_hashmap.insert(lines[2].to_string(), lines[4].to_string());
+
+       return format!(":{}/r/n" , new_hashmap.len())
     }
 
 
