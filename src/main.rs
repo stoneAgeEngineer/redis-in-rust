@@ -121,9 +121,10 @@ fn handle_command(
                }
 
            } 
+        }else {
+            list_for_key.push(values);
         }
 
-        list_for_key.push(values);
        return format!(":{}\r\n" , list_for_key.len())
     }
 
