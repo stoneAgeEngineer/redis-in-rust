@@ -120,7 +120,7 @@ fn handle_command(
        let mut new_hashmap : HashMap<String, Box<dyn Any + Send>> = HashMap::new();
        new_hashmap.insert(key , values);
        let hashmap_len = new_hashmap.len();
-       list_array.lock().unwrap().push(new_hashmap);
+       list_guard.push(new_hashmap);
 
        return format!(":{}\r\n" , hashmap_len)
     }
