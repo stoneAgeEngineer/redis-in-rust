@@ -112,8 +112,18 @@ fn handle_command(
 
         let list_for_key = list_guard.entry(key).or_insert_with(Vec::new);
 
-       list_for_key.push(values);
+        if lines.len() > 7 {
+           for (index , val) in lines.iter().enumerate(){
+               if index == 6{
+                    list_for_key.push(val.to_string());
+               }else if index > 6 && index % 2 == 0 {
+                    list_for_key.push(val.to_string());
+               }
 
+           } 
+        }
+
+        list_for_key.push(values);
        return format!(":{}\r\n" , list_for_key.len())
     }
 
