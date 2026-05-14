@@ -114,7 +114,7 @@ fn handle_command(
             if map.contains_key(&key) {
                 println!("Found key in list guard");
                 map.insert(key, values);
-                return format!(":{}\r\n" , map.len())
+                return format!(":{}\r\n" , map.values().len())
             }
         }
 
